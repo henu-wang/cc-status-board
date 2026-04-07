@@ -223,61 +223,62 @@ function buildKeywords(name, desc) {
   return [...new Set(words.filter(w => !stop.has(w) && w.length >= 3))];
 }
 
-// ── Bilingual keyword expansion via LLM ─────────────────────────
-// Calls an OpenAI-compatible API to generate Chinese keywords for
-// English assets, so CJK queries can match English descriptions.
-// Set CC_LLM_API_KEY (or OPENAI_API_KEY) + CC_LLM_BASE_URL to enable.
-async function expandBilingualKeywords(assets) {
-  const apiKey = process.env.CC_LLM_API_KEY || process.env.OPENAI_API_KEY;
-  const baseUrl = (process.env.CC_LLM_BASE_URL || 'https://api.openai.com/v1').replace(/\/$/, '');
-  const model = process.env.CC_LLM_MODEL || 'gpt-4o-mini';
+// ── Bilingual keyword expansion via Claude Code CLI ─────────────
+// Uses `claude -p` (print mode) to generate Chinese keywords for
+// English assets. Zero config — every CC user has the CLI available.
+const { execSync } = require('child_process');
 
-  if (!apiKey) {
-    console.log('  \x1b[33m⚠\x1b[0m No LLM API key found (CC_LLM_API_KEY or OPENAI_API_KEY). Skipping bilingual keywords.');
+function findClaudeCLI() {
+  // execSync doesn't see shell aliases, so resolve the real binary path
+  const candidates = [
+    path.join(HOME, '.npm-global/bin/claude'),
+    '/usr/local/bin/claude',
+    '/opt/homebrew/bin/claude',
+  ];
+  for (const p of candidates) {
+    if (fs.existsSync(p)) return p;
+  }
+  // Fallback: ask shell to resolve
+  try {
+    return execSync('command -v claude', { encoding: 'utf8', stdio: ['pipe','pipe','ignore'] }).trim();
+  } catch { return null; }
+}
+
+function expandBilingualKeywords(assets) {
+  if (process.env.CC_SKIP_BILINGUAL === '1') return;
+
+  const claudeBin = findClaudeCLI();
+  if (!claudeBin) {
+    console.log('  \x1b[33m⚠\x1b[0m claude CLI not found. Skipping bilingual keywords.');
     return;
   }
 
   const nonHook = assets.filter(a => a.type !== 'hook');
   if (nonHook.length === 0) return;
 
-  const BATCH = 30;
+  console.log(`  Generating bilingual keywords for ${nonHook.length} assets via Claude CLI...`);
+
+  const BATCH = 40;
   let expanded = 0;
 
   for (let i = 0; i < nonHook.length; i += BATCH) {
     const batch = nonHook.slice(i, i + BATCH);
     const toolList = batch.map((a, idx) =>
-      `${idx + 1}. ${a.name}: ${(a.desc || '').substring(0, 120)}`
+      `${idx + 1}. ${a.name}: ${(a.desc || '').substring(0, 100)}`
     ).join('\n');
 
-    const prompt = `For each AI tool below, generate 3-8 Chinese search keywords a Chinese-speaking developer would type to find it. Output ONLY a JSON object mapping the exact tool name to an array of Chinese keywords. No markdown, no explanation.
+    const prompt = `For each AI tool below, generate 3-8 Chinese search keywords a Chinese-speaking developer would type to find it. Output ONLY a JSON object mapping the exact tool name to an array of Chinese keywords. No markdown, no explanation, no code fences.
 
 Tools:
 ${toolList}`;
 
     try {
-      const resp = await fetch(`${baseUrl}/chat/completions`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`
-        },
-        body: JSON.stringify({
-          model,
-          messages: [{ role: 'user', content: prompt }],
-          temperature: 0.3,
-          max_tokens: 2000
-        }),
-        signal: AbortSignal.timeout(30000)
-      });
+      const raw = execSync(
+        `${JSON.stringify(claudeBin)} -p --model haiku`,
+        { input: prompt, encoding: 'utf8', timeout: 90000, stdio: ['pipe', 'pipe', 'ignore'] }
+      );
 
-      if (!resp.ok) {
-        console.log(`  \x1b[33m⚠\x1b[0m LLM API returned ${resp.status}, skipping batch ${Math.floor(i / BATCH) + 1}`);
-        continue;
-      }
-
-      const data = await resp.json();
-      const content = data.choices?.[0]?.message?.content || '';
-      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      const jsonMatch = raw.match(/\{[\s\S]*\}/);
       if (!jsonMatch) continue;
 
       const zhMap = JSON.parse(jsonMatch[0]);
@@ -301,7 +302,7 @@ ${toolList}`;
 
       console.log(`  \x1b[32m✓\x1b[0m Bilingual keywords: batch ${Math.floor(i / BATCH) + 1} (${batch.length} assets)`);
     } catch (e) {
-      console.log(`  \x1b[33m⚠\x1b[0m LLM call failed for batch ${Math.floor(i / BATCH) + 1}: ${e.message}`);
+      console.log(`  \x1b[33m⚠\x1b[0m Claude CLI call failed for batch ${Math.floor(i / BATCH) + 1}: ${e.message.split('\n')[0]}`);
     }
   }
 
@@ -310,8 +311,8 @@ ${toolList}`;
   }
 }
 
-// ── Main (async for LLM calls) ──────────────────────────────────
-async function main() {
+// ── Main ────────────────────────────────────────────────────────
+function main() {
 
 const assets = [];
 
@@ -412,8 +413,8 @@ if (fs.existsSync(hooksDir)) {
   }
 }
 
-// ── Bilingual expansion (LLM) ───────────────────────────────────
-await expandBilingualKeywords(assets);
+// ── Bilingual expansion (Claude CLI) ────────────────────────────
+expandBilingualKeywords(assets);
 
 // ── Compute IDF weights ──────────────────────────────────────────
 const docCount = assets.length;
@@ -449,4 +450,4 @@ for (const [t, c] of Object.entries(types)) console.log(`  ${t}: ${c}`);
 
 } // end main
 
-main().catch(e => { console.error(e.message); process.exit(1); });
+main();

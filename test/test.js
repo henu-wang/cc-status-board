@@ -41,7 +41,7 @@ test('statusline renders model and context', () => {
 const claudeDir = path.join(os.homedir(), '.claude');
 if (fs.existsSync(claudeDir)) {
   test('index builder scans assets', () => {
-    const out = execSync(`node ${path.join(SRC, 'build-index.js')}`, { encoding: 'utf8' });
+    const out = execSync(`CC_SKIP_BILINGUAL=1 node ${path.join(SRC, 'build-index.js')}`, { encoding: 'utf8' });
     assert(out.includes('Asset index'), 'should output index summary');
   });
 
