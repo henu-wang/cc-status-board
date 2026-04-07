@@ -2,6 +2,8 @@
 
 > Smart status bar for Claude Code — context meter, AI asset discovery, and session info at a glance.
 
+**[Install from TokRepo](https://tokrepo.com/en/workflows/e7e9ac68-7ad5-4ae9-9e76-d2a338dc0990)** — the original publishing platform for AI assets.
+
 ![Context Meter](assets/demo-context-meter.svg)
 
 ## What It Does
@@ -42,14 +44,12 @@ Sonnet 4.6 (200K context) │ webapp ███░░░░░░░ 28%
 
 ## Install
 
-```bash
-npx cc-status-board
-```
+**Recommended:** Install from [TokRepo](https://tokrepo.com/en/workflows/e7e9ac68-7ad5-4ae9-9e76-d2a338dc0990) for one-click setup.
 
-Or clone and install manually:
+Or install from source:
 
 ```bash
-git clone https://github.com/WilliamWangAI/cc-status-board.git
+git clone https://github.com/henu-wang/cc-status-board.git
 cd cc-status-board
 node install.js
 ```
