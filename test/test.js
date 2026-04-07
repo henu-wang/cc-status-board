@@ -65,6 +65,16 @@ if (fs.existsSync(claudeDir)) {
     // Should not crash
   });
 
+  test('asset suggest matches Chinese "调试这个错误"', () => {
+    execSync(`echo '{"message":"调试这个错误"}' | node ${path.join(SRC, 'asset-suggest.js')}`);
+    const bridgePath = path.join(os.tmpdir(), 'claude-asset-suggest.json');
+    if (fs.existsSync(bridgePath)) {
+      const bridge = JSON.parse(fs.readFileSync(bridgePath, 'utf8'));
+      assert(bridge.top.length > 0, 'should have suggestions for Chinese input');
+    }
+    // Even if no match (no bilingual index), should not crash
+  });
+
   test('slash commands skip', () => {
     execSync(`echo '{"message":"/help"}' | node ${path.join(SRC, 'asset-suggest.js')}`);
     // Should not crash

@@ -29,6 +29,7 @@ As you type, the most relevant installed AI assets appear in your status bar. No
 
 **Smart matching (not just keyword search):**
 - 35+ intent categories with CJK + English aliases
+- **Bilingual keywords** — LLM generates Chinese keywords for English assets at index time, so Chinese queries match English tools
 - TF-IDF weighting — rare keywords matter more
 - Specificity bonus — specialist tools rank above generalists
 - Diversity filter — no more than 2 results from the same namespace
@@ -99,12 +100,30 @@ rm ~/.claude/hooks/cc-build-index.js
 rm ~/.claude/cache/asset-index.json
 ```
 
+## Bilingual Matching (v1.1)
+
+By default, asset names and descriptions are in English. If you type in Chinese (or other CJK languages), only intent detection works — keyword and description matching won't fire.
+
+**To enable bilingual keywords**, set an OpenAI-compatible API key before building the index:
+
+```bash
+export CC_LLM_API_KEY="sk-..."          # or OPENAI_API_KEY
+export CC_LLM_BASE_URL="https://api.openai.com/v1"  # optional, default OpenAI
+export CC_LLM_MODEL="gpt-4o-mini"       # optional, default gpt-4o-mini
+node ~/.claude/hooks/cc-build-index.js
+```
+
+The index builder will call the LLM once per ~30 assets to generate Chinese search keywords. These are stored in the local index — **zero extra cost at query time**.
+
+Works with any OpenAI-compatible provider (OpenAI, Azure, vLLM, Ollama, etc.).
+
 ## Configuration
 
 The status bar works out of the box. To customize:
 
 | What | How |
 |------|-----|
+| Enable bilingual matching | Set `CC_LLM_API_KEY` env var, then rebuild index |
 | Change bar width | Edit `statusline.js`, change `Math.floor(used / 10)` denominator |
 | Add intent categories | Edit `build-index.js`, add to `INTENT_TAXONOMY` |
 | Change max suggestions | Edit `asset-suggest.js`, change `MAX_SUGGESTIONS` |

@@ -1,6 +1,6 @@
 {
   "name": "cc-status-board",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Smart status bar for Claude Code — context meter, AI asset discovery, and session info at a glance",
   "main": "install.js",
   "bin": {

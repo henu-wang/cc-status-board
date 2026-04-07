@@ -88,7 +88,8 @@ console.log(`  ${GREEN}✓${RESET} Updated settings.json`);
 // 3. Build initial asset index
 console.log(`\n  Building asset index...`);
 try {
-  require(path.join(HOOKS_DIR, 'cc-build-index.js'));
+  const { execSync } = require('child_process');
+  execSync(`node "${path.join(HOOKS_DIR, 'cc-build-index.js')}"`, { stdio: 'inherit', timeout: 120000 });
 } catch (e) {
   console.log(`  ${YELLOW}⚠${RESET} Index build failed: ${e.message}`);
   console.log(`    ${DIM}Run manually: node ~/.claude/hooks/cc-build-index.js${RESET}`);

@@ -223,6 +223,96 @@ function buildKeywords(name, desc) {
   return [...new Set(words.filter(w => !stop.has(w) && w.length >= 3))];
 }
 
+// ── Bilingual keyword expansion via LLM ─────────────────────────
+// Calls an OpenAI-compatible API to generate Chinese keywords for
+// English assets, so CJK queries can match English descriptions.
+// Set CC_LLM_API_KEY (or OPENAI_API_KEY) + CC_LLM_BASE_URL to enable.
+async function expandBilingualKeywords(assets) {
+  const apiKey = process.env.CC_LLM_API_KEY || process.env.OPENAI_API_KEY;
+  const baseUrl = (process.env.CC_LLM_BASE_URL || 'https://api.openai.com/v1').replace(/\/$/, '');
+  const model = process.env.CC_LLM_MODEL || 'gpt-4o-mini';
+
+  if (!apiKey) {
+    console.log('  \x1b[33m⚠\x1b[0m No LLM API key found (CC_LLM_API_KEY or OPENAI_API_KEY). Skipping bilingual keywords.');
+    return;
+  }
+
+  const nonHook = assets.filter(a => a.type !== 'hook');
+  if (nonHook.length === 0) return;
+
+  const BATCH = 30;
+  let expanded = 0;
+
+  for (let i = 0; i < nonHook.length; i += BATCH) {
+    const batch = nonHook.slice(i, i + BATCH);
+    const toolList = batch.map((a, idx) =>
+      `${idx + 1}. ${a.name}: ${(a.desc || '').substring(0, 120)}`
+    ).join('\n');
+
+    const prompt = `For each AI tool below, generate 3-8 Chinese search keywords a Chinese-speaking developer would type to find it. Output ONLY a JSON object mapping the exact tool name to an array of Chinese keywords. No markdown, no explanation.
+
+Tools:
+${toolList}`;
+
+    try {
+      const resp = await fetch(`${baseUrl}/chat/completions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          model,
+          messages: [{ role: 'user', content: prompt }],
+          temperature: 0.3,
+          max_tokens: 2000
+        }),
+        signal: AbortSignal.timeout(30000)
+      });
+
+      if (!resp.ok) {
+        console.log(`  \x1b[33m⚠\x1b[0m LLM API returned ${resp.status}, skipping batch ${Math.floor(i / BATCH) + 1}`);
+        continue;
+      }
+
+      const data = await resp.json();
+      const content = data.choices?.[0]?.message?.content || '';
+      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) continue;
+
+      const zhMap = JSON.parse(jsonMatch[0]);
+
+      for (const asset of batch) {
+        const zhList = zhMap[asset.name];
+        if (!Array.isArray(zhList)) continue;
+        const extra = [];
+        for (const kw of zhList) {
+          const lower = kw.toLowerCase();
+          extra.push(lower);
+          // Generate CJK bigrams so asset-suggest tokenizer can match
+          const cjk = lower.match(/[\u4e00-\u9fff]+/g) || [];
+          for (const seg of cjk) {
+            for (let j = 0; j < seg.length - 1; j++) extra.push(seg.slice(j, j + 2));
+          }
+        }
+        asset.keywords = [...new Set([...asset.keywords, ...extra])];
+        expanded++;
+      }
+
+      console.log(`  \x1b[32m✓\x1b[0m Bilingual keywords: batch ${Math.floor(i / BATCH) + 1} (${batch.length} assets)`);
+    } catch (e) {
+      console.log(`  \x1b[33m⚠\x1b[0m LLM call failed for batch ${Math.floor(i / BATCH) + 1}: ${e.message}`);
+    }
+  }
+
+  if (expanded > 0) {
+    console.log(`  \x1b[32m✓\x1b[0m Bilingual keywords added for ${expanded}/${nonHook.length} assets`);
+  }
+}
+
+// ── Main (async for LLM calls) ──────────────────────────────────
+async function main() {
+
 const assets = [];
 
 // ── Scan all asset sources ───────────────────────────────────────
@@ -322,6 +412,9 @@ if (fs.existsSync(hooksDir)) {
   }
 }
 
+// ── Bilingual expansion (LLM) ───────────────────────────────────
+await expandBilingualKeywords(assets);
+
 // ── Compute IDF weights ──────────────────────────────────────────
 const docCount = assets.length;
 const df = {}; // document frequency per keyword
@@ -353,3 +446,7 @@ const types = {};
 assets.forEach(a => { types[a.type] = (types[a.type] || 0) + 1; });
 console.log(`Asset index v2 built: ${assets.length} assets -> ${OUTPUT}`);
 for (const [t, c] of Object.entries(types)) console.log(`  ${t}: ${c}`);
+
+} // end main
+
+main().catch(e => { console.error(e.message); process.exit(1); });
