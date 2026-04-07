@@ -32,14 +32,26 @@ process.stdin.on('end', () => {
       const filled = Math.floor(used / 10);
       const bar = '\u2588'.repeat(filled) + '\u2591'.repeat(10 - filled);
 
+      // Smart tips based on context usage
+      let tip = '';
+      if (used >= 90) {
+        tip = ' \x1b[5;31m⚠ /compact now or start new chat\x1b[0m';
+      } else if (used >= 75) {
+        tip = ' \x1b[38;5;208m→ /compact recommended\x1b[0m';
+      } else if (used >= 60) {
+        tip = ' \x1b[33m→ wrap up or /compact soon\x1b[0m';
+      } else if (used >= 40) {
+        tip = ' \x1b[2m→ /commit before context fills\x1b[0m';
+      }
+
       if (used < 50) {
-        ctx = ` \x1b[32m${bar} ${used}%\x1b[0m`;
+        ctx = ` \x1b[32m${bar} ${used}%\x1b[0m${tip}`;
       } else if (used < 65) {
-        ctx = ` \x1b[33m${bar} ${used}%\x1b[0m`;
+        ctx = ` \x1b[33m${bar} ${used}%\x1b[0m${tip}`;
       } else if (used < 80) {
-        ctx = ` \x1b[38;5;208m${bar} ${used}%\x1b[0m`;
+        ctx = ` \x1b[38;5;208m${bar} ${used}%\x1b[0m${tip}`;
       } else {
-        ctx = ` \x1b[5;31m${bar} ${used}%\x1b[0m`;
+        ctx = ` \x1b[5;31m${bar} ${used}%\x1b[0m${tip}`;
       }
     }
 
