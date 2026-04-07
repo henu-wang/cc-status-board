@@ -119,6 +119,10 @@ The status bar works out of the box. To customize:
 
 MIT
 
+## Acknowledgments
+
+Inspired by [Get Shit Done (GSD)](https://github.com/gsd-build/get-shit-done) — the statusline hook architecture and context monitoring patterns originated from this project. If you're building non-trivial projects with Claude Code, GSD is a game changer.
+
 ## Author
 
-Built by [William Wang](https://github.com/WilliamWangAI) — founder of [TokRepo](https://tokrepo.com), [GEOScore AI](https://geoscoreai.com), and [KeepRule](https://keeprule.com).
+Built by [William Wang](https://github.com/henu-wang) — founder of [TokRepo](https://tokrepo.com), [GEOScore AI](https://geoscoreai.com), and [KeepRule](https://keeprule.com).
