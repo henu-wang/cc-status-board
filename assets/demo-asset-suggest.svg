@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="820" height="328" viewBox="0 0 820 328">
+  <rect width="820" height="328" rx="8" fill="#1a1a2e"/>
+  <rect x="0" y="0" width="820" height="28" rx="8" fill="#16162a"/>
+  <circle cx="16" cy="14" r="5" fill="#ff5f57"/>
+  <circle cx="34" cy="14" r="5" fill="#febc2e"/>
+  <circle cx="52" cy="14" r="5" fill="#28c840"/>
+  <text x="410" y="18" text-anchor="middle" fill="#666" font-size="12" font-family="Menlo,monospace">Claude Code</text>
+  <g transform="translate(0, 12)">
+  <text x="20" y="38" fill="#a3a3a3" font-size="14" font-family="Menlo,monospace">❯ help me do SEO analysis</text>
+<text x="20" y="70" fill="#737373" font-size="13" font-family="Menlo,monospace">Opus 4.6 (1M) │ myproject █░░░░░░░░░ 8%</text><text x="334.2" y="70" fill="#22d3ee" font-size="13" font-family="Menlo,monospace">💡 /marketing:seo-audit  /backlink-builder</text>
+<text x="20" y="110" fill="#a3a3a3" font-size="14" font-family="Menlo,monospace">❯ debug this API error</text>
+<text x="20" y="142" fill="#737373" font-size="13" font-family="Menlo,monospace">Opus 4.6 (1M) │ myproject ██░░░░░░░░ 15%</text><text x="342" y="142" fill="#22d3ee" font-size="13" font-family="Menlo,monospace">💡 /gsd-debug  Agent("gsd-debugger")</text>
+<text x="20" y="182" fill="#a3a3a3" font-size="14" font-family="Menlo,monospace">❯ make a landing page</text>
+<text x="20" y="214" fill="#737373" font-size="13" font-family="Menlo,monospace">Opus 4.6 (1M) │ myproject ███░░░░░░░ 22%</text><text x="342" y="214" fill="#22d3ee" font-size="13" font-family="Menlo,monospace">💡 /frontend-design  /theme-factory</text>
+<text x="20" y="254" fill="#a3a3a3" font-size="14" font-family="Menlo,monospace">❯ 做个数据库查询</text>
+<text x="20" y="286" fill="#737373" font-size="13" font-family="Menlo,monospace">Opus 4.6 (1M) │ myproject ███░░░░░░░ 28%</text><text x="342" y="286" fill="#22d3ee" font-size="13" font-family="Menlo,monospace">💡 /data:write-query  /data:sql-queries</text>
+
+  </g>
+</svg>
